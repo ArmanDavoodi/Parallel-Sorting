@@ -12,11 +12,11 @@ int N = 10, Ni = 0, Nf = 0;
 int *arri = nullptr;
 float *arrf = nullptr;
 bool useFloat = false;
-int n_sorted = 0;
+int n_sorted = 0; // should be at least 0 and at most N -> 0 = not sorting at all, N sort the whole array
 int int_min = -50000, int_max = 50000;
 float float_min = -50000.0f, float_max = 50000.0f;
-int repeat = 0;
-int n_shuffle = 0
+int repeat = 0; // should be equal or more than 0
+int n_shuffle = 0 // should be equal or more than 0
 char path[30];
 
 char EXIT[30] = "exit";
