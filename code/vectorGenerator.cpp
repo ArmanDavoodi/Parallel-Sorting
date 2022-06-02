@@ -16,7 +16,7 @@ int n_sorted = 0; // should be at least 0 and at most N -> 0 = not sorting at al
 int int_min = -50000, int_max = 50000;
 float float_min = -50000.0f, float_max = 50000.0f;
 int repeat = 0; // should be equal or more than 0
-int n_shuffle = 0 // should be equal or more than 0
+int n_shuffle = 0; // should be equal or more than 0
 char path[30];
 
 char EXIT[30] = "exit";
@@ -116,6 +116,9 @@ int main() {
         }
 
     } while (strcmp(query, "exit"));
+
+    delete[] arri;
+    delete[] arrf;
 }
 
 void clear() {
@@ -196,7 +199,7 @@ void generate() {
     for (int i = repeat; i > 0; i /= 10)
         ++n_digit;
     uniform_int_distribution<> random_dom(0, n_digit);
-    uniform_int_distribution<> random_index(0, N);
+    uniform_int_distribution<> random_index(0, N - 1);
 
     if (useFloat) {
 	    arrf = new float[N];
@@ -256,9 +259,9 @@ void generate() {
     for (int i = 0; i < N; ++i)
 	{
         if (useFloat && n_sorted > 0 && (i + 1) % n_sorted == 0)
-            sort(arrf + i + 1 - n_sorted, 0, arrf + i + 1);
+            sort(arrf + i + 1 - n_sorted, arrf + i + 1);
         else if (!useFloat && n_sorted > 0 && (i + 1) % n_sorted == 0)
-            sort(arri + i + 1 - n_sorted, 0, arrf + i + 1);
+            sort(arri + i + 1 - n_sorted, arri + i + 1);
 	}
 
     // shuffle
