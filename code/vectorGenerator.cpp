@@ -12,13 +12,17 @@ int N = 10, Ni = 0, Nf = 0;
 int *arri = nullptr;
 float *arrf = nullptr;
 bool useFloat = false;
-bool sorted = false;
+int n_sorted = 0;
 int int_min = -50000, int_max = 50000;
 float float_min = -50000.0f, float_max = 50000.0f;
+int repeat = 0;
+int n_shuffle = 0
 char path[30];
 
 char EXIT[30] = "exit";
-char SET_SORTED[30] = "set_sorted";
+char SET_SORTED[30] = "set_n_sorted";
+char SET_SHUFFLE[30] = "set_n_shuffle";
+char SET_REPEAT[30] = "set_repeat";
 char SET_USE_FLOAT[30] = "set_use_float";
 char SET_SIZE[30] = "set_size";
 char SET_MINI[30] = "set_mini";
@@ -54,8 +58,13 @@ int main() {
     do {
         scanf("%s", query);
         if (!strcmp(query, SET_SORTED)) {
-            scanf("%d", &number);
-            sorted = (number != 0);
+            scanf("%d", &n_sorted);
+        }
+        else if (!strcmp(query, SET_SHUFFLE)) {
+            scanf("%d", &n_shuffle);
+        }
+        else if (!strcmp(query, SET_REPEAT)) {
+            scanf("%d", &repeat);
         }
         else if (!strcmp(query, SET_USE_FLOAT)) {
             scanf("%d", &number);
@@ -142,7 +151,9 @@ void iprint() {
 void help() {
     printf("Queries:\n");
     printf("\t\'%s\':\texits.\n", EXIT);
-    printf("\t\'%s\' <NUMBER> :\tsets sorted false if <NUMBER> is 0 else true.\n", SET_SORTED);
+    printf("\t\'%s\' <NUMBER> :\tsorts each block of size <NUMBER> while creating the array\n", SET_SORTED);
+    printf("\t\'%s\' <NUMBER> :\tshuffles <NUMBER> number of elements randomly at the end\n", SET_SHUFFLE);
+    printf("\t\'%s\' <NUMBER> :\trepeats each element k number of times where k is between 0 and <NUMBER>\n", SET_REPEAT);
     printf("\t\'%s\' <NUMBER> :\tgenerates/loads/saves int arr if <NUMBER> is 0 else uses float arr.\n", SET_USE_FLOAT);
     printf("\t\'%s\' <NUMBER>:\tsets array size.\n", SET_SIZE);
     printf("\t\'%s\' <NUMBER>:\tsets upper bound for integers.\n", SET_MAXI);
@@ -165,7 +176,9 @@ void getVars() {
     printf("\t\'size of current integer array\': %d\n", Ni);
     printf("\t\'size of current float array\': %d\n", Nf);
     printf("\t\'USE_FLOAT\': %d\n", (int)useFloat);
-    printf("\t\'SORTED\': %d\n", (int)sorted);
+    printf("\t\'SORTED\': %d\n", n_sorted);
+    printf("\t\'number of shuffles\': %d\n", n_shuffle);
+    printf("\t\'Repeat\': %d\n", repeat);
     printf("\t\'integer upper bound\': %d\n", int_max);
     printf("\t\'integer lower bound\': %d\n", int_min);
     printf("\t\'float upper bound\': %f\n", float_max);
@@ -179,6 +192,12 @@ void generate() {
     uniform_real_distribution<> distribf(float_min, float_max);
 	uniform_int_distribution<> distribi(int_min, int_max);
 
+    int n_digit = 0;
+    for (int i = repeat; i > 0; i /= 10)
+        ++n_digit;
+    uniform_int_distribution<> random_dom(0, n_digit);
+    uniform_int_distribution<> random_index(0, N);
+
     if (useFloat) {
 	    arrf = new float[N];
         Nf = N;
@@ -188,19 +207,74 @@ void generate() {
         Ni = N;
     }
 
+    // generate
 	for (int i = 0; i < N; ++i)
 	{
-        if (useFloat)
+        int dom = random_dom(gen), lr = 0, ur = 0;
+        if (dom != 0) {
+            for (ur = 1; dom > 0; --dom)
+                ur *= 10;
+            lr = ur / 10;
+            --lr;
+            --ur;
+            ur = min(ur, repeat);
+        }
+        uniform_int_distribution<> random_repeat(lr, ur);
+        int r = random_repeat(gen); // number of times to repeat
+
+        if (useFloat) {
             arrf[i] = distribf(gen);
-        else
+            for(; i < N - 1 && r > 0; ++i, --r)
+                arrf[i + 1] = arrf[i];
+        }
+        else {
             arri[i] = distribi(gen);
+            for(; i < N - 1 && r > 0; ++i, --r)
+                arri[i + 1] = arri[i];
+        }
 	}
 
-    if (sorted) {
-        if (useFloat)
-            sort(arrf, arrf + Nf);
-        else
-            sort(arri, arri + Ni);
+    // shuffle if not uniform
+    if (repeat > 0) {
+        for (int i = 0; i < N; ++i)
+        {
+            int index = random_index(gen);
+            if (useFloat) {
+                arrf[i] += arrf[index];
+                arrf[index] = arrf[i] - arrf[index];
+                arrf[i] -= arrf[index];
+            }
+            else {
+                arri[i] += arri[index];
+                arri[index] = arri[i] - arri[index];
+                arri[i] -= arri[index];
+            }
+        }
+    }
+
+    // sort
+    for (int i = 0; i < N; ++i)
+	{
+        if (useFloat && n_sorted > 0 && (i + 1) % n_sorted == 0)
+            sort(arrf + i + 1 - n_sorted, 0, arrf + i + 1);
+        else if (!useFloat && n_sorted > 0 && (i + 1) % n_sorted == 0)
+            sort(arri + i + 1 - n_sorted, 0, arrf + i + 1);
+	}
+
+    // shuffle
+    for (int i = 0; i < n_shuffle; ++i)
+    {
+        int i1 = random_index(gen), i2 = random_index(gen);
+        if (useFloat) {
+            arrf[i1] += arrf[i2];
+            arrf[i2] = arrf[i1] - arrf[i2];
+            arrf[i1] -= arrf[i2];
+        }
+        else {
+            arri[i1] += arri[i2];
+            arri[i2] = arri[i1] - arri[i2];
+            arri[i1] -= arri[i2];
+        }
     }
 	
 	printf("\n#### Random array generated succesfully! ####\n\n");   
