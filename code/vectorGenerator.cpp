@@ -19,12 +19,14 @@ float float_min = -50000.0f, float_max = 50000.0f;
 int repeat = 0; // should be equal or more than 0
 int n_shuffle = 0; // should be equal or more than 0
 float sort_prob = 1.0; // the probability of sorting in each iteration
+float sort_asc = 1.0; // the probability of sorting in ascending order
 char path[30];
 
 char EXIT[30] = "exit";
 char SET_SORTED[30] = "set_n_sorted";
 char SET_EQUAL_BLOCK_SORT[30] = "set_uniform_sort";
 char SET_SORT_PROB[30] = "set_sort_prob";
+char SET_SORT_ASC[30] = "set_sort_asc";
 char SET_SHUFFLE[30] = "set_n_shuffle";
 char SET_REPEAT[30] = "set_repeat";
 char SET_USE_FLOAT[30] = "set_use_float";
@@ -72,6 +74,9 @@ int main() {
         }
         else if (!strcmp(query, SET_SORT_PROB)) {
             scanf("%f", &sort_prob);
+        }
+        else if (!strcmp(query, SET_SORT_ASC)) {
+            scanf("%f", &sort_asc);
         }
         else if (!strcmp(query, SET_USE_FLOAT)) {
             scanf("%d", &number);
@@ -171,6 +176,7 @@ void help() {
     printf("\t\'%s\' <NUMBER> :\tgenerates/loads/saves int arr if <NUMBER> is 0 else uses float arr.\n", SET_USE_FLOAT);
     printf("\t\'%s\' <NUMBER> :\tsorts equal sized block of data if not 0 else sorts random block sizes.\n", SET_EQUAL_BLOCK_SORT);
     printf("\t\'%s\' <NUMBER> :\tsorts each block with probability of <NUMBER>\n", SET_SORT_PROB);
+    printf("\t\'%s\' <NUMBER> :\twhen sorting, sorts ascending with probability of <NUMBER>\n", SET_SORT_ASC);
     printf("\t\'%s\' <NUMBER>:\tsets array size.\n", SET_SIZE);
     printf("\t\'%s\' <NUMBER>:\tsets upper bound for integers.\n", SET_MAXI);
     printf("\t\'%s\' <NUMBER>:\tsets lower bound for integers.\n", SET_MINI);
@@ -194,6 +200,7 @@ void getVars() {
     printf("\t\'USE_FLOAT\': %d\n", (int)useFloat);
     printf("\t\'UNIFORM_SORT\': %d\n", (int)uniform_sort);
     printf("\t\'sort probability\': %f\n", sort_prob);
+    printf("\t\'sort acsending probability\': %f\n", sort_asc);
     printf("\t\'N_SORTED\': %d\n", n_sorted);
     printf("\t\'number of shuffles\': %d\n", n_shuffle);
     printf("\t\'Repeat\': %d\n", repeat);
@@ -296,24 +303,41 @@ void generate() {
             int block_seen = 0;
 
             if (uniform_sort) {
-                if (useFloat && (i + 1) % n_sorted == 0 && prob(gen) <= sort_prob)
-                    sort(arrf + i + 1 - n_sorted, arrf + i + 1);
-                else if (!useFloat && (i + 1) % n_sorted == 0 && prob(gen) <= sort_prob)
-                    sort(arri + i + 1 - n_sorted, arri + i + 1);
+                if (useFloat && (i + 1) % n_sorted == 0 && prob(gen) <= sort_prob) {
+                    if (prob(gen) <= sort_asc)
+                        sort(arrf + i + 1 - n_sorted, arrf + i + 1, less<float>());
+                    else
+                        sort(arrf + i + 1 - n_sorted, arrf + i + 1, greater<float>());
+                }
+                else if (!useFloat && (i + 1) % n_sorted == 0 && prob(gen) <= sort_prob) {
+                    if (prob(gen) <= sort_asc)
+                        sort(arri + i + 1 - n_sorted, arri + i + 1, less<int>());
+                    else
+                        sort(arri + i + 1 - n_sorted, arri + i + 1, greater<int>());
+                }
+                last_index = i + 1;
             }
             else {
                 if (block_seen == 0)
                     size = random_sort_block_size(gen);
                 
                 if (useFloat && block_seen == size) {
-                    if (prob(gen) <= sort_prob)
-                        sort(arrf + last_index, arrf + i + 1);
+                    if (prob(gen) <= sort_prob) {
+                        if (prob(gen) <= sort_asc)
+                            sort(arrf + last_index, arrf + i + 1, less<float>());
+                        else
+                            sort(arrf + last_index, arrf + i + 1, greater<float>());
+                    }
                     block_seen = -1;
                     last_index = i + 1;
                 }
                 else if (!useFloat && block_seen == size) {
-                    if (prob(gen) <= sort_prob)
-                        sort(arri + last_index, arri + i + 1);
+                    if (prob(gen) <= sort_prob) {
+                        if (prob(gen) <= sort_asc)
+                            sort(arri + last_index, arri + i + 1, less<int>());
+                        else
+                            sort(arri + last_index, arri + i + 1, greater<int>());
+                    }
                     block_seen = -1;
                     last_index = i + 1;
                 }
@@ -321,11 +345,19 @@ void generate() {
                 ++block_seen;
             }
         }
-        if (uniform_sort && last_index < N && prob(gen) <= sort_prob) {
-            if (useFloat)
-                sort(arrf + last_index, arrf + N);
-            else
-                sort(arri + last_index, arri + N);
+        if (last_index < N && prob(gen) <= sort_prob) {
+            if (useFloat) {
+                if (prob(gen) <= sort_asc)
+                    sort(arrf + last_index, arrf + N, less<float>());
+                else
+                    sort(arrf + last_index, arrf + N, greater<float>());
+            }
+            else {
+                if (prob(gen) <= sort_asc)
+                    sort(arri + last_index, arri + N, less<int>());
+                else
+                    sort(arri + last_index, arri + N, greater<int>());
+            }
         }
     }
 

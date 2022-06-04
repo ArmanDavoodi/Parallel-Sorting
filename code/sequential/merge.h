@@ -5,7 +5,14 @@
 #include "insertion.h"
 
 namespace seq {
-    constexpr int MERGE_SORT_AD_HOC = 1; // todo
+    inline int getMinRunSize(int N) {
+        int r = 0;
+        while (N >= 64) {
+            r |= N & 1;
+            N >>= 1;
+        }
+        return N + r;
+    }
 
     // merge two blocks of sorted arrays -> midx is the starting index of the right array
     template<typename Num>
@@ -57,10 +64,8 @@ namespace seq {
 
     // bottom-up implementation
     template<typename Num>
-    double mergeSort(Num* arr, int N) {
-        double start = omp_get_wtime();
-        
-        register int currentSize = MERGE_SORT_AD_HOC, i;
+    void mergeSort(Num* arr, int N) {        
+        register int currentSize = getMinRunSize(N), i;
 
         // ad-hoc -> sort smaller blocks using insertion sort
         if (currentSize > 1) {
@@ -71,14 +76,12 @@ namespace seq {
         for (; currentSize < N; currentSize *= 2) {
             for (i = 0; i < N - 1; i += 2*currentSize) {
                 int mid = std::min(i + currentSize, N-1);
-                int right = std::min(i + 2*currentSize - 1, N - 1);
+                int right = std::min(i + 2*currentSize - 1, N-1);
 
                 if (arr[mid - 1] > arr[mid]) // merge two blocks if they are not already sorted
                     merge(arr, i, mid, right);
             }
         }
-
-        return omp_get_wtime() - start;
     }
 
 }

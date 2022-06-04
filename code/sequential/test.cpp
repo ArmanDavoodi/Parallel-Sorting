@@ -1,5 +1,6 @@
 #include "sequential_sorts.h"
 #include <stdio.h>
+#include <omp.h>
 
 int main() {
     int N = 10;
@@ -14,7 +15,9 @@ int main() {
         printf("%d ", arr[i]);
     printf("\n");
 
-    double time = seq::mergeSort(arr, N);
+    double time = omp_get_wtime();
+    seq::mergeSort(arr, N);
+    time = omp_get_wtime() - time;
 
     for (int i = 0; i < N; ++i)
         printf("%d ", arr[i]);

@@ -6,8 +6,7 @@
 namespace seq {
 
     template<typename Num>
-    double bubbleSort(Num* arr, int N) {
-        double start = omp_get_wtime();
+    void bubbleSort(Num* arr, int N) {
         int sorted = false;
         for (int i = 0; !sorted && i < N - 1; ++i) {
             sorted = true;
@@ -18,7 +17,6 @@ namespace seq {
                 }
             }
         }
-        return omp_get_wtime() - start;
     }
 
 }

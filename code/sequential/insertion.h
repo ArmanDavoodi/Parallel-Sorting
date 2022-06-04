@@ -6,8 +6,7 @@
 namespace seq {
 
     template<typename Num>
-    double insertionSort(Num* arr, int N) {
-        double start = omp_get_wtime();
+    void insertionSort(Num* arr, int N) {
         for (int i = 1; i < N; ++i) {
             int j;
             Num temp = arr[i];
@@ -16,7 +15,6 @@ namespace seq {
             }
             arr[j] = temp;
         }
-        return omp_get_wtime() - start;
     }
 
 }
