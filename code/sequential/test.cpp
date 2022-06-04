@@ -10,13 +10,16 @@ int main() {
     // int arr[N] = {1, 2, 3, 4, 5, 6, 7, 8, 9, 10};
     int arr[N] = {10, 4, 1, 5, 2, 6, 3, 8, 9, 7};
     // float arr[N] = {0.1, 0.2, 0.3, 0.3, 0.5, -0.6, 0.7, 0.8, 0.19, 0.11};
+    // int arr[N] = {7, 4, 1, 5, 2, 6, 3, 8};
+    // int arr[N] = {7, 4, 13, 5, 1, 6, 16, 8, 12, 9, 11, 3, 15, 2, 10, 14};
+
 
     for (int i = 0; i < N; ++i)
         printf("%d ", arr[i]);
     printf("\n");
 
     double time = omp_get_wtime();
-    seq::mergeSort(arr, N);
+    seq::bitonicSort(arr, N);
     time = omp_get_wtime() - time;
 
     for (int i = 0; i < N; ++i)

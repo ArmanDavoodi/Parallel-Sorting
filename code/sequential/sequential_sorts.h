@@ -8,5 +8,6 @@
 #include "odd_even.h"
 #include "counting.h"
 #include "merge.h"
+#include "bitonic.h"
 
 #endif
