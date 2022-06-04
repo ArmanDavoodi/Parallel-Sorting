@@ -9,5 +9,6 @@
 #include "counting.h"
 #include "merge.h"
 #include "bitonic.h"
+#include "batcher_odd_even_merge.h"
 
 #endif
