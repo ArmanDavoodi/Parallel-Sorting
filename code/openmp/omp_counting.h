@@ -3,8 +3,6 @@
 
 #include "omp_sorts_headers.h"
 
-#include <stdio.h>
-
 namespace omp_par {
     void countingSort(int* arr, int N, int min, int max) {
         int k = max - min + 1;
