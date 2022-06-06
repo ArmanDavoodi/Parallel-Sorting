@@ -19,9 +19,8 @@ int main() {
         printf("%d ", arr[i]);
     printf("\n");
 
-    double time = omp_get_wtime();
-    omp_par::batcherOddEvenMergeSort(arr, N);
-    time = omp_get_wtime() - time;
+    double time = 0;
+    omp_par::batcherOddEvenMergeSort(arr, N, time);
 
     for (int i = 0; i < N; ++i)
         printf("%d ", arr[i]);

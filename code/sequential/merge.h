@@ -64,7 +64,9 @@ namespace seq {
 
     // bottom-up implementation
     template<typename Num>
-    void mergeSort(Num* arr, int N) {        
+    void mergeSort(Num* arr, int N, double& deltaTime) {    
+        double t = omp_get_wtime();
+
         register int currentSize = getMinRunSize(N), i;
 
         // ad-hoc -> sort smaller blocks using insertion sort
@@ -82,6 +84,8 @@ namespace seq {
                     merge(arr, i, mid, right);
             }
         }
+
+        deltaTime += omp_get_wtime() - t;
     }
 
 }

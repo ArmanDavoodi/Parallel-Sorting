@@ -6,7 +6,9 @@
 namespace seq {
 
     template<typename Num>
-    void oddEvenSort(Num* arr, int N) {
+    void oddEvenSort(Num* arr, int N, double& deltaTime) {
+        double t = omp_get_wtime();
+
         int sorted = false;
         while (!sorted) {
             sorted = true;
@@ -23,6 +25,8 @@ namespace seq {
                 }
             }
         }
+
+        deltaTime += omp_get_wtime() - t;
     }
 
 }

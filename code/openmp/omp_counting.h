@@ -4,7 +4,9 @@
 #include "omp_sorts_headers.h"
 
 namespace omp_par {
-    void countingSort(int* arr, int N, int min, int max) {
+    void countingSort(int* arr, int N, int min, int max, double& deltaTime) {
+        double t = omp_get_wtime();
+
         int k = max - min + 1;
         int* count = new int[k];
         omp_lock_t* countLock = new omp_lock_t[k];
@@ -72,6 +74,8 @@ namespace omp_par {
         delete[] input;
         delete[] count;
         delete[] countLock;
+
+        deltaTime += omp_get_wtime() - t;
     }
 
 }

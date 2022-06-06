@@ -4,7 +4,9 @@
 #include "sorts_headers.h"
 
 namespace seq {
-    void countingSort(int* arr, int N, int min, int max) {
+    void countingSort(int* arr, int N, int min, int max, double& deltaTime) {
+        double t = omp_get_wtime(); 
+
         int k = max - min + 1;
         register int i;
         int count[k] = {0};
@@ -25,6 +27,8 @@ namespace seq {
         }
 
         delete[] input;
+
+        deltaTime += omp_get_wtime() - t;
     }
 
 }

@@ -6,7 +6,9 @@
 namespace seq {
     // only works on arrays of size 2^k
     template<typename Num>
-    void bitonicSort(Num* arr, int N) {        
+    void bitonicSort(Num* arr, int N, double& deltaTime) { 
+        double t = omp_get_wtime();
+
         // size of the runs being sorted
         for (int runSize = 2; runSize <= N; runSize = 2*runSize) {
             for (int stage = runSize / 2; stage > 0; stage /= 2) {
@@ -20,6 +22,8 @@ namespace seq {
                 }
             }
         }
+
+        deltaTime += omp_get_wtime() - t;
     }
 
 }

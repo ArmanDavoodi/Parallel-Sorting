@@ -6,7 +6,9 @@
 namespace seq {
     // only works on arrays of size 2^k
     template<typename Num>
-    void batcherOddEvenMergeSort(Num* arr, int N) {        
+    void batcherOddEvenMergeSort(Num* arr, int N, double& deltaTime) {       
+        double t = omp_get_wtime();
+
         for (int p = 1; p < N; p = 2*p) {
             for (int k = p; k > 0; k /= 2) {
                 for (int j = k % p; j < N - k; j += 2*k) {
@@ -18,6 +20,8 @@ namespace seq {
                 }
             }
         }
+
+        deltaTime += omp_get_wtime - t;
     }
 
 }
