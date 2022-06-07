@@ -6,7 +6,6 @@
 
 #include <algorithm>
 #include <stdio.h>
-#include <math.h>
 
 namespace cuda_par {
     template<typename T>

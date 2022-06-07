@@ -7,10 +7,14 @@ namespace cuda_par {
     constexpr int oddEvenThreadsPerBlock = 1024;
 
     template<typename Num>
-    __global__ void cudaOddEvenKernel(Num* device_arr, int startIdx, int N) {
-        int index = (blockIdx.x * blockDim.x + threadIdx.x) * 2 + startIdx;
-        if (index < N - 1 && device_arr[index] > device_arr[index + 1])
-            swap(device_arr[index], device_arr[index + 1]);
+    __global__ void cudaOddEvenKernel(Num* device_arr, int startIdx, int N, int nt) {
+        int index = blockIdx.x * blockDim.x + threadIdx.x;
+        
+        if (index < nt) {
+            index = 2 * index + startIdx;
+            if (index < N - 1 && device_arr[index] > device_arr[index + 1])
+                swap(device_arr[index], device_arr[index + 1]);
+        }
     }
 
     template<typename Num>
@@ -24,7 +28,7 @@ namespace cuda_par {
 
         for (int phase = 0; phase < N; ++phase) {
             cudaOddEvenKernel<<<numberOfNeededThreads / oddEvenThreadsPerBlock + (numberOfNeededThreads % oddEvenThreadsPerBlock > 0)
-                , std::min(numberOfNeededThreads, oddEvenThreadsPerBlock)>>>(device_arr, phase % 2, N);
+                , std::min(numberOfNeededThreads, oddEvenThreadsPerBlock)>>>(device_arr, phase % 2, N, numberOfNeededThreads);
         }
         
         cudaStatus = cudaEnding(host_arr, device_arr, start, stop, deltaTime, N);

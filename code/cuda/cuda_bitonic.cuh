@@ -9,12 +9,14 @@ namespace cuda_par {
     template<typename Num>
     __global__ void cudaBitonicKernel(Num* device_arr, int runSize, int stage, int N) {
         int wireLowerEnd = blockIdx.x * blockDim.x + threadIdx.x;
-        int wireUpperEnd = wireLowerEnd ^ stage;
+        if (wireLowerEnd < N) {
+            int wireUpperEnd = wireLowerEnd ^ stage;
 
-        if (wireUpperEnd > wireLowerEnd)
-            if (((wireLowerEnd & runSize) == 0 && device_arr[wireLowerEnd] > device_arr[wireUpperEnd]) // sort ascending
-                    || ((wireLowerEnd & runSize) != 0 && device_arr[wireLowerEnd] < device_arr[wireUpperEnd])) // sort descending
-                    swap(device_arr[wireLowerEnd], device_arr[wireUpperEnd]);
+            if (wireUpperEnd > wireLowerEnd)
+                if (((wireLowerEnd & runSize) == 0 && device_arr[wireLowerEnd] > device_arr[wireUpperEnd]) // sort ascending
+                        || ((wireLowerEnd & runSize) != 0 && device_arr[wireLowerEnd] < device_arr[wireUpperEnd])) // sort descending
+                        swap(device_arr[wireLowerEnd], device_arr[wireUpperEnd]);
+        }
     }
 
     // only works on arrays of size 2^k
