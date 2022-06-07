@@ -9,7 +9,7 @@ namespace cuda_par {
     constexpr int mergeThreadsPerBlock = 1024;
 
     template<typename Num>
-    __global__ void insertionSort(Num* device_arr, int currentSize, int N, int nt) {
+    __global__ void insertionSortKernel(Num* device_arr, int currentSize, int N, int nt) {
         int index = blockIdx.x * blockDim.x + threadIdx.x;
         if (index < nt) {
             index *= currentSize;
@@ -28,7 +28,7 @@ namespace cuda_par {
     }
 
     template<typename Num>
-    __global__ void merge(Num* device_arr, Num* temp_arr, int currentSize, int N, int nt) {
+    __global__ void mergeKernel(Num* device_arr, Num* temp_arr, int currentSize, int N, int nt) {
         int index = blockIdx.x * blockDim.x + threadIdx.x;
 
         if (index < nt) {
@@ -102,13 +102,13 @@ namespace cuda_par {
         // ad-hoc -> sort smaller blocks using insertion sort
         if (currentSize > 1) {
             int nt = N / currentSize + (N % currentSize > 0);
-            insertionSort<<<nt / insertionSortThreadsPerBlock + (nt % insertionSortThreadsPerBlock > 0)
+            insertionSortKernel<<<nt / insertionSortThreadsPerBlock + (nt % insertionSortThreadsPerBlock > 0)
                 , std::min(nt, insertionSortThreadsPerBlock)>>>(device_arr, currentSize, N, nt);
         }
         
         for (; currentSize < N; currentSize *= 2) {
             int nt = (N - 1) / (2 * currentSize) + ((N - 1) % (2 * currentSize) > 0);
-            merge<<<nt / mergeThreadsPerBlock + (nt % mergeThreadsPerBlock > 0)
+            mergeKernel<<<nt / mergeThreadsPerBlock + (nt % mergeThreadsPerBlock > 0)
                 , std::min(nt, mergeThreadsPerBlock)>>>(device_arr, temp_arr, currentSize, N, nt);
         }
 

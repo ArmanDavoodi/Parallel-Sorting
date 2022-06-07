@@ -6,5 +6,6 @@
 #include "cuda_bitonic.cuh"
 #include "cuda_batcher_odd_even_merge.cuh"
 #include "cuda_merge.cuh"
+#include "cuda_counting.cuh"
 
 #endif
