@@ -20,8 +20,7 @@ namespace seq {
                 }
             }
         }
-
-        deltaTime += omp_get_wtime - t;
+        deltaTime += omp_get_wtime() - t;
     }
 
 }

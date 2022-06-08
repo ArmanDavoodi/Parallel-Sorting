@@ -173,7 +173,7 @@ void help() {
     printf("\t\'%s\' <NUMBER> :\tsorts each block of size <NUMBER> while creating the array\n", SET_SORTED);
     printf("\t\'%s\' <NUMBER> :\tshuffles <NUMBER> number of elements randomly at the end\n", SET_SHUFFLE);
     printf("\t\'%s\' <NUMBER> :\trepeats each element k number of times where k is between 0 and <NUMBER>\n", SET_REPEAT);
-    printf("\t\'%s\' <NUMBER> :\tgenerates/loads/saves int arr if <NUMBER> is 0 else uses float arr.\n", SET_USE_FLOAT);
+    printf("\t\'%s\' <NUMBER> :\tgenerates int arr if <NUMBER> is 0 else uses float arr.\n", SET_USE_FLOAT);
     printf("\t\'%s\' <NUMBER> :\tsorts equal sized block of data if not 0 else sorts random block sizes.\n", SET_EQUAL_BLOCK_SORT);
     printf("\t\'%s\' <NUMBER> :\tsorts each block with probability of <NUMBER>\n", SET_SORT_PROB);
     printf("\t\'%s\' <NUMBER> :\twhen sorting, sorts ascending with probability of <NUMBER>\n", SET_SORT_ASC);
@@ -388,6 +388,7 @@ void save() {
     else
         n = Ni;
     
+    fprintf(fp, "%d\n", (int)useFloat);
     fprintf(fp, "%d\n", n);
 
 	for (int i = 0; i < n; ++i)
@@ -406,19 +407,20 @@ void save() {
 
 void load() {
     FILE* fp = fopen(path, "r");
-    int n;
+    int n, inUseFloat;
     
+    fscanf(fp, "%d", &inUseFloat);
     fscanf(fp, "%d", &n);
 
 	for (int i = 0; i < n; ++i)
 	{
-        if (useFloat)
+        if (inUseFloat)
             fscanf(fp, "%f", arrf + i);
         else
             fscanf(fp, "%d", arri + i);
 	}
 
-    if (useFloat)
+    if (inUseFloat)
 	    Nf = n;
     else
         Ni = n;
