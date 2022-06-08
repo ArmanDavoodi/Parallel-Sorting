@@ -9,14 +9,11 @@ namespace omp_par {
     void oddEvenSort(Num* arr, int N, double& deltaTime) {
         double t = omp_get_wtime();
 
-        #pragma omp parallel num_threads(P)
-        {
-            for (int phase = 0; phase < N; ++phase) {
-                #pragma omp for
-                for (int i = phase % 2; i < (N - 1); i += 2) {
-                    if (arr[i] > arr[i+1])
-                        std::swap(arr[i], arr[i+1]);
-                }
+        for (int phase = 0; phase < N; ++phase) {
+            #pragma omp parallel for num_threads(P)
+            for (int i = phase % 2; i < (N - 1); i += 2) {
+                if (arr[i] > arr[i+1])
+                    std::swap(arr[i], arr[i+1]);
             }
         }
 

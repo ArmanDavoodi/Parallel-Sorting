@@ -5,6 +5,8 @@
 #include "../sequential/insertion.h"
 #include "../sequential/merge.h"
 
+#include <stdio.h>
+
 namespace omp_par {
     // bottom-up implementation
     template<typename Num>
@@ -15,14 +17,12 @@ namespace omp_par {
 
         // ad-hoc -> sort smaller blocks using insertion sort
         if (currentSize > 1) {
-            #pragma omp parallel for num_threads(P) schedule(dynamic) // use dynamic scheduling for load balancing
+            #pragma omp parallel for num_threads(P)
             for (i = 0; i < N; i += currentSize)
                 seq::insertionSort(arr + i, i + currentSize < N ? currentSize : N - i);
         }
-        
-        #pragma omp parallel num_threads(P) // use or not TODO ##################################
         for (; currentSize < N; currentSize *= 2) {
-            #pragma omp for schedule(dynamic)
+            #pragma omp parallel for num_threads(P)
             for (i = 0; i < N - 1; i += 2*currentSize) {
                 int mid = std::min(i + currentSize, N-1);
                 int right = std::min(i + 2*currentSize - 1, N-1);

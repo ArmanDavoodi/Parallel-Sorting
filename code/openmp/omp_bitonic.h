@@ -10,10 +10,9 @@ namespace omp_par {
         double t = omp_get_wtime();
         
         // size of the runs being sorted
-        #pragma omp parallel num_threads(P) // use or not TODO ###############################
         for (int runSize = 2; runSize <= N; runSize = 2*runSize) {
             for (int stage = runSize / 2; stage > 0; stage /= 2) {
-                #pragma omp for // TODO scheduling ########################
+                #pragma omp parallel for num_threads(P)
                 for (int wireLowerEnd = 0; wireLowerEnd < N; ++wireLowerEnd) {
                     int wireUpperEnd = wireLowerEnd ^ stage;
                     if (wireUpperEnd > wireLowerEnd){

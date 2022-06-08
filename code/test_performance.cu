@@ -4,7 +4,7 @@
 
 // #define PERFORMANCE_DEBUG // if defined, prints the array after sorting it
 
-constexpr char TEST_PATH[] = "tests/simpleInt(2^15)"; // test file path
+constexpr char TEST_PATH[] = "tests/simpleInt(2^27)"; // test file path
 constexpr int NRUNS = 10; // number of runs
 
 int* iArray = nullptr;
@@ -40,17 +40,25 @@ int main() {
 
     double elapsedTime = 0;
     double pre = 0;
-    int min = 0, max = 0;
-    printf("sorting %s array of size %d...\n", useFloat ? "Float" : "Int", size);
-    // printf("sorting %s array of size %d in range (%d, %d)...\n", useFloat ? "Float" : "Int", size, min, max);
+    int min = -50000, max = 50000;
+    printf("sorting %s array of size %d in range (%d, %d)...\n", useFloat ? "Float" : "Int", size, min, max);
     for (int i = 0; i < NRUNS; ++i) {
         if (useFloat) {
-            copyArr(ftArray, fArray, size);
-            seq::bubbleSort(ftArray, size, elapsedTime);
+            // copyArr(ftArray, fArray, size);
+            // cuda_par::batcherOddEvenMergeSort(ftArray, size, elapsedTime);
+
+            // double t = omp_get_wtime();
+            // std::sort(ftArray, ftArray + size);
+            // elapsedTime += omp_get_wtime() - t;
         }
         else {
             copyArr(itArray, iArray, size);
-            seq::bubbleSort(itArray, size, elapsedTime);
+            cuda_par::mergeSort(itArray, size, elapsedTime);
+            // cuda_par::countingSort(itArray, size, min, max, elapsedTime);
+
+            // double t = omp_get_wtime();
+            // std::sort(itArray, itArray + size);
+            // elapsedTime += omp_get_wtime() - t;
         }
         printf("\tRun number %d completed in %f seconds.\n", i + 1, elapsedTime - pre);
         pre = elapsedTime;

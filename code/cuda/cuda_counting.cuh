@@ -122,15 +122,13 @@ namespace cuda_par {
         return cudaStatus;
     }
 
-    cudaError_t countingSort(int* host_arr, int N, int min, int max, double& deltaTime) { // min and max should be in a way that make k a power of 2 or a power of 2 + 1
+    cudaError_t countingSort(int* host_arr, int N, int min, int max, double& deltaTime) {
         cudaError_t cudaStatus;
         cudaEvent_t start, stop;
         int* device_arr = NULL;
         int k = max - min + 1;
         int* d_count = NULL; 
         int* h_count = new int[k];
-
-        printf("\nN = %d, k = %d\n", N, k);
 
         cudaStatus = cudaMalloc((void**)&d_count, k * sizeof(int));
         if (cudaStatus != cudaSuccess) {
