@@ -21,7 +21,7 @@ int main() {
     printf("\n");
 
     double time = 0;
-    cuda_par::countingSort(arr, N, -10, 24, time);
+    cuda_par::mergeSort(arr, N, time);
 
     for (int i = 0; i < N; ++i)
         printf("%d ", arr[i]);

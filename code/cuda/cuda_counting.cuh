@@ -4,7 +4,7 @@
 #include "cuda_sorts_headers.cuh"
 
 namespace cuda_par {
-    constexpr int cumulativeSumThreadsPerBlock = 1024;
+    constexpr int prefixSumThreadsPerBlock = 128;
     constexpr int countKerThreadsPerBlock = 1024;
     constexpr int putValThreadsPerBlock = 1024;
     constexpr int countSortThreadsPerBlock = 1024;
@@ -27,28 +27,41 @@ namespace cuda_par {
         return low;
     }  
 
-    // k should be either a power of 2 or a power of 2 + 1
-    __global__ void cumulativeSumKernel(int* d_count, int k, int N) {
+    __global__ void blockPrefixSumKernel(int* d_arr, int* sums, int N) {
+        int thread_index = blockIdx.x * blockDim.x + threadIdx.x;
+        __shared__ int temp_arr[prefixSumThreadsPerBlock];
+
+        temp_arr[threadIdx.x] = thread_index < N ? d_arr[thread_index] : 0;
+
+        __syncthreads();
+
+        for (int stepSize = 1; stepSize <= prefixSumThreadsPerBlock >> 1; stepSize <<= 1) {
+            int i = (threadIdx.x + 1) * stepSize * 2 - 1;
+            if (i < prefixSumThreadsPerBlock)
+                temp_arr[i] += temp_arr[i - stepSize];
+            
+            __syncthreads();
+        }
+        
+        for (int stepSize = prefixSumThreadsPerBlock >> 2; stepSize > 0; stepSize >>= 1) {
+            int i = (threadIdx.x + 1) * stepSize * 2 - 1;
+            if (i + stepSize < prefixSumThreadsPerBlock)
+                temp_arr[i + stepSize] += temp_arr[i];
+            
+            __syncthreads();
+        }
+
+        if (threadIdx.x == 0)
+            sums[blockIdx.x] = temp_arr[prefixSumThreadsPerBlock - 1];
+        
+        d_arr[thread_index] = (thread_index < N) * temp_arr[threadIdx.x];
+    }
+
+    __global__ void addPrefixSumKernel(int* d_arr, int* sums, int N) {
         int thread_index = blockIdx.x * blockDim.x + threadIdx.x;
 
-        if (thread_index < k / 2) {
-
-            for (int stepSize = 1; stepSize <= k >> 1; stepSize <<= 1) {
-                int i = (thread_index + 1) * stepSize * 2 - 1;
-                if (i < k)
-                    d_count[i] += d_count[i - stepSize];
-                
-                __syncthreads();
-            }
-            
-            for (int stepSize = k >> 2; stepSize > 0; stepSize >>= 1) {
-                int i = (thread_index + 1) * stepSize * 2 - 1;
-                if (i + stepSize < k)
-                    d_count[i + stepSize] += d_count[i];
-                
-                __syncthreads();
-            }
-        }
+        if (thread_index >= prefixSumThreadsPerBlock && thread_index < N)
+            d_arr[thread_index] += sums[blockIdx.x - 1];
     }
 
     __global__ void countKernel(int* device_arr, int* count, int N, int min) {
@@ -71,6 +84,42 @@ namespace cuda_par {
             int valIdx = lower_bound(count, k, index + 1);
             device_arr[index] = valIdx + min;
         }
+    }
+
+    cudaError_t parallelPrefixSum(int* d_arr, int N) {
+        int* sums = NULL;
+        int numberOfBlocks = N / prefixSumThreadsPerBlock + (N % prefixSumThreadsPerBlock > 0);
+        cudaError_t cudaStatus;
+        
+        cudaStatus = cudaMalloc((void**)&sums, numberOfBlocks * sizeof(int));
+        if (cudaStatus != cudaSuccess) {
+            printf("Error: could not allocate memory for sum array(N = %d, numberOfBlocks = %d): \n%s\n"
+                , N, numberOfBlocks, cudaGetErrorString(cudaStatus));
+            return cudaStatus;
+        }
+
+        blockPrefixSumKernel<<<numberOfBlocks, prefixSumThreadsPerBlock>>>(d_arr, sums, N);
+        cudaStatus = cudaGetLastError();
+        if (cudaStatus != cudaSuccess) {
+            printf("Error: blockPrefixSumKernel launch failed(N = %d, numberOfBlocks = %d): \n%s\n"
+                , N, numberOfBlocks, cudaGetErrorString(cudaStatus));
+            return cudaStatus;
+        }
+
+        if (numberOfBlocks > 1) {
+            cudaStatus = parallelPrefixSum(sums, numberOfBlocks);
+            if (cudaStatus != cudaSuccess)
+                return cudaStatus;
+
+            addPrefixSumKernel<<<numberOfBlocks, prefixSumThreadsPerBlock>>>(d_arr, sums, N);
+            if (cudaStatus != cudaSuccess) {
+                printf("Error: addPrefixSumKernel launch failed(N = %d, numberOfBlocks = %d): \n%s\n"
+                    , N, numberOfBlocks, cudaGetErrorString(cudaStatus));
+                return cudaStatus;
+            }
+        }
+
+        return cudaStatus;
     }
 
     cudaError_t countingSort(int* host_arr, int N, int min, int max, double& deltaTime) { // min and max should be in a way that make k a power of 2 or a power of 2 + 1
@@ -97,13 +146,6 @@ namespace cuda_par {
             printf("puVal launch failed: %s\n", cudaGetErrorString(cudaStatus));
             return cudaStatus;
         }
-
-        cudaDeviceSynchronize();
-        cudaMemcpy(h_count, d_count, k * sizeof(int), cudaMemcpyDeviceToHost);
-        printf("count at first:\n");
-        for (int i = 0; i < k; ++i)
-            printf("%d ", h_count[i]);
-        printf("\n");
         
         cudaStatus = cudaInitialization(device_arr, host_arr, start, stop, N);
 
@@ -116,36 +158,7 @@ namespace cuda_par {
             return cudaStatus;
         }
 
-        cudaDeviceSynchronize();
-        cudaMemcpy(h_count, d_count, k * sizeof(int), cudaMemcpyDeviceToHost);
-        printf("count after counting:\n");
-        for (int i = 0; i < k; ++i)
-            printf("%d ", h_count[i]);
-        printf("\n");
-
-        cumulativeSumKernel<<<k / cumulativeSumThreadsPerBlock + (k % cumulativeSumThreadsPerBlock > 0)
-            , std::min(cumulativeSumThreadsPerBlock, k)>>>(d_count, k, N);
-        
-        cudaStatus = cudaGetLastError();
-        if (cudaStatus != cudaSuccess) {
-            printf("cumulativeSumKernel launch failed: %s\n", cudaGetErrorString(cudaStatus));
-            return cudaStatus;
-        }
-
-        cudaDeviceSynchronize();
-        cudaMemcpy(h_count, d_count, k * sizeof(int), cudaMemcpyDeviceToHost);
-        printf("count after cumulative sum:\n");
-        for (int i = 0; i < k; ++i)
-            printf("%d ", h_count[i]);
-        printf("\n");
-
-        printf("lower_bounds:\n");
-        for (int i = 0; i < N; ++i)
-            printf("%d ", lower_bound(h_count, k, i));
-        printf("\n");
-
-
-        printf("\n");
+        parallelPrefixSum(d_count, k);
 
         countSortKernel<<<N / countSortThreadsPerBlock + (N % countSortThreadsPerBlock > 0)
             , std::min(countSortThreadsPerBlock, N)>>>(device_arr, d_count, N, k, min);

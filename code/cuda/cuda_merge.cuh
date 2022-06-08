@@ -5,7 +5,7 @@
 #include "../sequential/merge.h"
 
 namespace cuda_par {
-    constexpr int insertionSortThreadsPerBlock = 1024;
+    constexpr int insertionSortThreadsPerBlock = 1024; // tune
     constexpr int mergeThreadsPerBlock = 1024;
 
     template<typename Num>
