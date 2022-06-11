@@ -4,7 +4,7 @@
 
 // #define PERFORMANCE_DEBUG // if defined, prints the array after sorting it
 
-constexpr char TEST_PATH[] = "tests/simpleInt(2^27)"; // test file path
+constexpr char TEST_PATH[] = "tests/simpleint_2^20(-500000000_500000000)"; // test file path
 constexpr int NRUNS = 10; // number of runs
 
 int* iArray = nullptr;
@@ -40,12 +40,12 @@ int main() {
 
     double elapsedTime = 0;
     double pre = 0;
-    int min = -50000, max = 50000;
+    int min = -500000000, max = 500000000;
     printf("sorting %s array of size %d in range (%d, %d)...\n", useFloat ? "Float" : "Int", size, min, max);
     for (int i = 0; i < NRUNS; ++i) {
         if (useFloat) {
             // copyArr(ftArray, fArray, size);
-            // cuda_par::batcherOddEvenMergeSort(ftArray, size, elapsedTime);
+            // cuda_par::mergeSort(ftArray, size, elapsedTime);
 
             // double t = omp_get_wtime();
             // std::sort(ftArray, ftArray + size);
@@ -53,7 +53,7 @@ int main() {
         }
         else {
             copyArr(itArray, iArray, size);
-            cuda_par::mergeSort(itArray, size, elapsedTime);
+            cuda_par::countingSort(itArray, size, min, max, elapsedTime);
             // cuda_par::countingSort(itArray, size, min, max, elapsedTime);
 
             // double t = omp_get_wtime();

@@ -9,11 +9,14 @@ namespace seq {
 
         int k = max - min + 1;
         register int i;
-        int count[k] = {0};
+        int* count = new int[k];
         int* input = new int[N];
         
         for (i = 0; i < N; ++i)
             input[i] = arr[i];
+        
+        for (int i = 0; i < k; ++i)
+            count[i] = 0;
 
         for (i = 0; i < N; ++i)
             ++count[input[i] - min];
@@ -27,6 +30,7 @@ namespace seq {
         }
 
         delete[] input;
+        delete[] count;
 
         deltaTime += omp_get_wtime() - t;
     }
